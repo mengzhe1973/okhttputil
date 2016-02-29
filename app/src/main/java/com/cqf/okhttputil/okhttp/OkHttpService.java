@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import okhttp3.Call;
-
 /**
  * Created by roy on 16/2/29.
  */
