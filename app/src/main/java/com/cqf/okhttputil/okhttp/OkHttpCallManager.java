@@ -1,4 +1,4 @@
-package com.cqf.okhttputil.manager;
+package com.cqf.okhttputil.okhttp;
 
 import android.text.TextUtils;
 
@@ -20,7 +20,7 @@ public class OkHttpCallManager {
         callMap = new ConcurrentHashMap<>();
     }
 
-    private ConcurrentHashMap<String, Call> callMap;
+    private ConcurrentHashMap<String, Call> callMap;//
     private static OkHttpCallManager manager;
 
     public void addCall(String url, Call call) {
@@ -33,7 +33,6 @@ public class OkHttpCallManager {
         if (TextUtils.isEmpty(url)) {
             return callMap.get(url);
         }
-
         return null;
     }
 

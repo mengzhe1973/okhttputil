@@ -1,4 +1,4 @@
-package com.cqf.okhttputil.manager;
+package com.cqf.okhttputil.okhttp;
 
 import okhttp3.Headers;
 

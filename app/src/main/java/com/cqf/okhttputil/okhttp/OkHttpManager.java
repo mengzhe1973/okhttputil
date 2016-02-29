@@ -1,11 +1,11 @@
-package com.cqf.okhttputil.manager;
+package com.cqf.okhttputil.okhttp;
 
 import android.text.TextUtils;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
-import java.util.List;
+import java.util.Map;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -88,7 +88,7 @@ public class OkHttpManager {
      * @param url
      * @param callback
      */
-    public void postAsyn(String url, List<ParamsPart> params, final OkHttpCallback
+    public void postAsyn(String url, RequestParams params, final OkHttpCallback
             callback) {
         Request request = buildPostRequest(url, params);
         Call call = mOkHttpClient.newCall(request);
@@ -99,10 +99,10 @@ public class OkHttpManager {
     /**
      * @param params 构建post请求
      */
-    private Request buildPostRequest(String url, List<ParamsPart> params) {
+    private Request buildPostRequest(String url, RequestParams params) {
         FormBody.Builder formBuilder = new FormBody.Builder();
-        for (ParamsPart part : params) {
-            formBuilder.add(part.getKey(), part.getValue());
+        for (Map.Entry<String,String> entry : params.getParams().entrySet()) {
+            formBuilder.add(entry.getKey(), entry.getValue());
         }
         RequestBody body = formBuilder.build();
         Request.Builder builder = new Request.Builder();
@@ -123,6 +123,7 @@ public class OkHttpManager {
             @Override
             public void onFailure(Call call, IOException e) {
                 ResponseData responseData = new ResponseData();
+                OkHttpCallManager.getInstance().removeCall(request.url().url().toString());
                 if (e instanceof SocketTimeoutException) {
                     responseData.setTimeout(true);
                 } else if (e instanceof InterruptedIOException && TextUtils.equals(e.getMessage(),
@@ -138,8 +139,7 @@ public class OkHttpManager {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 ResponseData responseData = new ResponseData();
-                OkHttpCallManager.getInstance().removeCall(response.request().url().url()
-                        .toString());
+                OkHttpCallManager.getInstance().removeCall(request.url().url().toString());
                 if (response != null) {
                     responseData.setResponseNull(false);
                     responseData.setCode(response.code());
@@ -158,5 +158,13 @@ public class OkHttpManager {
                 }
             }
         });
+    }
+
+    /**
+     * 取消请求
+     * @param key
+     */
+    public void cancelCall(String key){
+
     }
 }
