@@ -1,4 +1,4 @@
-package com.cqf.okhttputil.manager;
+package com.cqf.okhttputil.okhttp;
 
 import android.content.Context;
 import android.text.TextUtils;
@@ -67,20 +67,24 @@ public class OkHttpCallback {
      */
     private void parseResponseBody(ResponseData responseData) {
         String result = responseData.getResponse();
-
         if (TextUtils.isEmpty(result)) {
             responseData.setCode(ERROR_RESPONSE_NULL);
             onFailure(responseData);
             return;
+        } else {
+            try {
+                onSuccess(result);
+            } catch (Exception e) {
+                responseData.setCode(ERROR_RESPONSE_JSON_EXCEPTION);
+                onFailure(responseData);
+            }
         }
     }
-    public void onSuccess(String responsData){
-        
 
+    public void onSuccess(String responsData) {
     }
 
 
     public void onPost() {
-
     }
 }
