@@ -1,6 +1,10 @@
 package com.cqf.okhttputil.manager;
 
+import android.text.TextUtils;
+
 import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.SocketTimeoutException;
 import java.util.List;
 
 import okhttp3.Call;
@@ -42,7 +46,7 @@ public class OkHttpManager {
      * @return Response
      * @throws IOException
      */
-    private Response getSync(String url) throws IOException {
+    public Response getSync(String url) throws IOException {
         final Request request = new Request.Builder()
                 .url(url)
                 .build();
@@ -58,7 +62,7 @@ public class OkHttpManager {
      * @param url
      * @return 字符串
      */
-    private String getSyncString(String url) throws IOException {
+    public String getSyncString(String url) throws IOException {
         Response execute = getSync(url);
         return execute.body().string();
     }
@@ -69,13 +73,13 @@ public class OkHttpManager {
      * @param url
      * @param callback
      */
-    private void getAsyn(String url, final OkHttpCallback callback) {
+    public void getAsyn(String url, final OkHttpCallback callback) {
         final Request request = new Request.Builder()
                 .url(url)
                 .build();
         Call call = mOkHttpClient.newCall(request);
-        mCallbackManager.addCall(url,call);
-        deliveryResult(call,callback, request);
+        mCallbackManager.addCall(url, call);
+        deliveryResult(call, callback, request);
     }
 
     /**
@@ -84,11 +88,11 @@ public class OkHttpManager {
      * @param url
      * @param callback
      */
-    private void postAsyn(String url, List<ParamsPart> params, final OkHttpCallback
+    public void postAsyn(String url, List<ParamsPart> params, final OkHttpCallback
             callback) {
         Request request = buildPostRequest(url, params);
         Call call = mOkHttpClient.newCall(request);
-        mCallbackManager.addCall(url,call);
+        mCallbackManager.addCall(url, call);
         deliveryResult(call, callback, request);
     }
 
@@ -114,26 +118,43 @@ public class OkHttpManager {
      * @param callback
      * @param request
      */
-    private void deliveryResult(Call call, final OkHttpCallback callback, Request request) {
+    private void deliveryResult(Call call, final OkHttpCallback callback, final Request request) {
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
+                ResponseData responseData = new ResponseData();
+                if (e instanceof SocketTimeoutException) {
+                    responseData.setTimeout(true);
+                } else if (e instanceof InterruptedIOException && TextUtils.equals(e.getMessage(),
+                        "timeout")) {
+                    responseData.setTimeout(true);
+                }
                 if (callback != null) {
-                    callback.onFailure(call, e);
+                    callback.onPost();
+                    callback.onFailure(responseData);
                 }
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                try {
-                    final String string = response.body().string();
-                    if (callback != null) {
-                        callback.onResponse(string);
-                    }
-                } catch (IOException e) {
-                    if (callback != null) {
-                        callback.onFailure(call, e);
-                    }
+                ResponseData responseData = new ResponseData();
+                OkHttpCallManager.getInstance().removeCall(response.request().url().url()
+                        .toString());
+                if (response != null) {
+                    responseData.setResponseNull(false);
+                    responseData.setCode(response.code());
+                    responseData.setMessage(response.message());
+                    responseData.setSuccess(response.isSuccessful());
+                    String respBody = "";
+                    respBody = response.body().string();
+                    responseData.setResponse(respBody);
+                    responseData.setHeaders(response.headers());
+                } else {
+                    responseData.setResponseNull(true);
+                }
+                if (callback != null) {
+                    callback.onPost();
+                    callback.onResponse(responseData);
                 }
             }
         });
