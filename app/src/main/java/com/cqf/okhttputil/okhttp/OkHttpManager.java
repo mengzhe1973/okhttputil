@@ -2,8 +2,12 @@ package com.cqf.okhttputil.okhttp;
 
 import android.text.TextUtils;
 
+import com.cqf.okhttputil.io.FileUtils;
+
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.util.Map;
@@ -157,12 +161,70 @@ public class OkHttpManager {
 
     /**
      * 下载文件
+     *
      * @param url
      * @param target
      * @param callback
      */
-    public void download(String url,File target,FileDownloadCallback callback){
+    public void download(String url, File target, FileDownloadCallback callback) {
         if (!TextUtils.isEmpty(url) && target != null) {
+            FileUtils.mkdirs(target.getParentFile());
+            if (target.exists()) {
+                target.delete();
+            }
+            final Request request = new Request.Builder()
+                    .url(url)
+                    .build();
+            try {
+                Response response = mOkHttpClient.newCall(request).execute();
+                saveFile(response, target, callback);
+            } catch (Exception e) {
+                callback.onFailure();
+            }
+        }
+    }
+
+    public String saveFile(Response response, File target, FileDownloadCallback callback) throws
+            IOException {
+        InputStream is = null;
+        long previousTime = System.currentTimeMillis();
+        byte[] buf = new byte[2048];
+        int len = 0;
+        FileOutputStream fos = null;
+        try {
+            is = response.body().byteStream();
+            final long total = response.body().contentLength();
+            long sum = 0;
+            fos = new FileOutputStream(target);
+            while ((len = is.read(buf)) != -1) {
+                sum += len;
+                fos.write(buf, 0, len);
+                if (callback != null) {
+                    int progress = (int) (sum * 100.0f / total);
+                    //计算下载速度
+                    long totalTime = (System.currentTimeMillis() - previousTime) / 1000;
+                    if (totalTime == 0) {
+                        totalTime += 1;
+                    }
+                    long networkSpeed = sum / totalTime;
+                    callback.onProgress(progress, total, networkSpeed);
+                }
+            }
+            fos.flush();
+            return target.getAbsolutePath();
+        } finally {
+            try {
+                if (is != null) {
+                    is.close();
+                }
+            } catch (IOException e) {
+            }
+            try {
+                if (fos != null) {
+                    fos.close();
+                }
+            } catch (IOException e) {
+            }
         }
     }
 
