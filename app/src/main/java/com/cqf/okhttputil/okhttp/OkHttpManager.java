@@ -2,6 +2,7 @@ package com.cqf.okhttputil.okhttp;
 
 import android.text.TextUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
@@ -21,7 +22,6 @@ import okhttp3.Response;
 public class OkHttpManager {
     private static OkHttpManager mInstance = new OkHttpManager();
     private OkHttpClient mOkHttpClient;
-    private OkHttpCallManager mCallbackManager;
 
     public static OkHttpManager getInstance() {
         if (mInstance == null) {
@@ -36,7 +36,6 @@ public class OkHttpManager {
 
     private OkHttpManager() {
         mOkHttpClient = new OkHttpClient();
-        mCallbackManager = OkHttpCallManager.getInstance();
     }
 
     /**
@@ -52,7 +51,6 @@ public class OkHttpManager {
                 .build();
         Call call = mOkHttpClient.newCall(request);
         Response execute = call.execute();
-        mCallbackManager.addCall(url, call);
         return execute;
     }
 
@@ -78,36 +76,35 @@ public class OkHttpManager {
                 .url(url)
                 .build();
         Call call = mOkHttpClient.newCall(request);
-        mCallbackManager.addCall(url, call);
         deliveryResult(call, callback, request);
     }
 
     /**
      * 异步的post请求
      *
+     * @param requestKey
      * @param url
      * @param callback
      */
-    public void postAsyn(String url, RequestParams params, final OkHttpCallback
+    public void postAsyn(String requestKey, String url, RequestParams params, final OkHttpCallback
             callback) {
-        Request request = buildPostRequest(url, params);
+        Request request = buildPostRequest(requestKey, url, params);
         Call call = mOkHttpClient.newCall(request);
-        mCallbackManager.addCall(url, call);
         deliveryResult(call, callback, request);
     }
 
     /**
      * @param params 构建post请求
      */
-    private Request buildPostRequest(String url, RequestParams params) {
+    private Request buildPostRequest(String requestKey, String url, RequestParams params) {
         FormBody.Builder formBuilder = new FormBody.Builder();
-        for (Map.Entry<String,String> entry : params.getParams().entrySet()) {
+        for (Map.Entry<String, String> entry : params.getParams().entrySet()) {
             formBuilder.add(entry.getKey(), entry.getValue());
         }
         RequestBody body = formBuilder.build();
         Request.Builder builder = new Request.Builder();
         builder.put(body);
-        return builder.url(url).tag(url).build();
+        return builder.url(url).tag(requestKey).build();
     }
 
 
@@ -123,7 +120,6 @@ public class OkHttpManager {
             @Override
             public void onFailure(Call call, IOException e) {
                 ResponseData responseData = new ResponseData();
-                OkHttpCallManager.getInstance().removeCall(request.url().url().toString());
                 if (e instanceof SocketTimeoutException) {
                     responseData.setTimeout(true);
                 } else if (e instanceof InterruptedIOException && TextUtils.equals(e.getMessage(),
@@ -139,7 +135,6 @@ public class OkHttpManager {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 ResponseData responseData = new ResponseData();
-                OkHttpCallManager.getInstance().removeCall(request.url().url().toString());
                 if (response != null) {
                     responseData.setResponseNull(false);
                     responseData.setCode(response.code());
@@ -161,10 +156,49 @@ public class OkHttpManager {
     }
 
     /**
+     * 下载文件
+     * @param url
+     * @param target
+     * @param callback
+     */
+    public void download(String url,File target,FileDownloadCallback callback){
+        if (!TextUtils.isEmpty(url) && target != null) {
+        }
+    }
+
+    /**
      * 取消请求
+     *
      * @param key
      */
-    public void cancelCall(String key){
+    public void cancelCallByTag(String key) {
+        for (Call call : mOkHttpClient.dispatcher().queuedCalls()) {
+            if (key.equals(call.request().tag())) {
+                call.cancel();
+            }
+        }
+        for (Call call : mOkHttpClient.dispatcher().runningCalls()) {
+            if (key.equals(call.request().tag())) {
+                call.cancel();
+            }
+        }
+    }
 
+    /**
+     * 取消请求
+     *
+     * @param url
+     */
+    public void cancelCallByUrl(String url) {
+        for (Call call : mOkHttpClient.dispatcher().queuedCalls()) {
+            if (url.equals(call.request().url().url().toString())) {
+                call.cancel();
+            }
+        }
+        for (Call call : mOkHttpClient.dispatcher().runningCalls()) {
+            if (url.equals(call.request().url().toString())) {
+                call.cancel();
+            }
+        }
     }
 }

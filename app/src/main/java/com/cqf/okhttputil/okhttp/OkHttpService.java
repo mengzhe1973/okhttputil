@@ -1,5 +1,6 @@
 package com.cqf.okhttputil.okhttp;
 
+import android.os.Build;
 import android.text.TextUtils;
 
 import java.io.UnsupportedEncodingException;
@@ -9,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import okhttp3.Call;
 /**
  * Created by roy on 16/2/29.
  */
@@ -30,14 +30,20 @@ public class OkHttpService {
     public RequestParams createCommonParams(HttpCycleContext mContext) {
         RequestParams requestParams = new RequestParams(mContext);
         requestParams.addFormDataPart("", "");
+        long stime = System.currentTimeMillis();
+        requestParams.addFormDataPart("sign", "");
+        requestParams.addFormDataPart("timestamp", stime + "");
+        requestParams.addFormDataPart("device", Build.MODEL);
+        requestParams.addFormDataPart("devicetype", 0 + "");
         return requestParams;
     }
 
     public void testRequest1(HttpCycleContext mContext, OkHttpCallback callback) {
         RequestParams requestParams = createCommonParams(mContext);
-        String url = "www.baidu.com";
+        String url = "http://api.juxiangyou.com/app/api.php?c=login&a=register";
         addRequest(mContext.getHttpTaskKey(), url);
-        manager.postAsyn(url, requestParams, callback);
+        String requestKey = mContext.getHttpTaskKey();
+        manager.postAsyn(requestKey, url, requestParams, callback);
     }
 
     public void addRequest(String key, String url) {
@@ -55,22 +61,11 @@ public class OkHttpService {
 
     /**
      * 取消请求
+     *
      * @param key
      */
     public void cancelRequest(String key) {
-        if (reqeustMap.containsKey(key)) {
-            List<String> tasks = reqeustMap.get(key);
-            if (tasks != null && tasks.size() > 0) {
-                for (String url : tasks) {
-                    Call call = OkHttpCallManager.getInstance().getCall(url);
-                    if (call != null) {
-                        call.cancel();
-                    }
-                    OkHttpCallManager.getInstance().removeCall(url);
-                }
-            }
-            reqeustMap.remove(key);
-        }
+        manager.cancelCallByTag(key);
     }
 
     /**
