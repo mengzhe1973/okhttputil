@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -39,7 +40,13 @@ public class OkHttpManager {
     }
 
     private OkHttpManager() {
-        mOkHttpClient = new OkHttpClient();
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        builder.connectTimeout(10, TimeUnit.SECONDS);
+        mOkHttpClient = builder.build();
+    }
+
+    public OkHttpClient getOkHttpClient() {
+        return mOkHttpClient;
     }
 
     /**
@@ -166,18 +173,34 @@ public class OkHttpManager {
      * @param target
      * @param callback
      */
-    public void download(String url, File target, FileDownloadCallback callback) {
+    public void download(String requestKey, String url, final File target, final
+    FileDownloadCallback callback) {
         if (!TextUtils.isEmpty(url) && target != null) {
             FileUtils.mkdirs(target.getParentFile());
             if (target.exists()) {
                 target.delete();
             }
             final Request request = new Request.Builder()
-                    .url(url)
+                    .url(url).tag(requestKey)
                     .build();
             try {
-                Response response = mOkHttpClient.newCall(request).execute();
-                saveFile(response, target, callback);
+                target.createNewFile();
+                mOkHttpClient.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        if (callback != null) {
+                            callback.onFailure();
+                        }
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        String filapath = saveFile(response, target, callback);
+                        if (!TextUtils.isEmpty(filapath)) {
+                            callback.onDone(filapath);
+                        }
+                    }
+                });
             } catch (Exception e) {
                 callback.onFailure();
             }
@@ -212,18 +235,23 @@ public class OkHttpManager {
             }
             fos.flush();
             return target.getAbsolutePath();
+        } catch (IOException e) {
+            if (callback != null) {
+                callback.onFailure();
+            }
+            return "";
         } finally {
             try {
                 if (is != null) {
                     is.close();
                 }
-            } catch (IOException e) {
-            }
-            try {
                 if (fos != null) {
                     fos.close();
                 }
             } catch (IOException e) {
+                if (callback != null) {
+                    callback.onFailure();
+                }
             }
         }
     }

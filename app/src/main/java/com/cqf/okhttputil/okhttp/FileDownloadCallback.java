@@ -13,6 +13,6 @@ public class FileDownloadCallback {
     public void onFailure() {
     }
 
-    public void onDone() {
+    public void onDone(String filePath) {
     }
 }

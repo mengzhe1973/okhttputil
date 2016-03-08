@@ -18,6 +18,9 @@ package com.cqf.okhttputil.io;
 
 import android.os.Build;
 
+import com.cqf.okhttputil.io.stream.ByteArrayOutputStream;
+import com.cqf.okhttputil.io.stream.StringBuilderWriter;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -46,8 +49,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import cn.finalteam.toolsfinal.io.stream.ByteArrayOutputStream;
-import cn.finalteam.toolsfinal.io.stream.StringBuilderWriter;
 
 /**
  * General IO stream manipulation utilities.
