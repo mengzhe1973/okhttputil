@@ -16,7 +16,6 @@
 
 package com.cqf.okhttputil.okhttp.download;
 
-import android.app.Application;
 import android.content.Context;
 
 /**
@@ -26,7 +25,7 @@ public class FileDownloadHelper {
 
     private static Context APP_CONTEXT;
 
-    public static void initAppContext(final Application application) {
+    public static void initAppContext(final Context application) {
         APP_CONTEXT = application;
     }
 

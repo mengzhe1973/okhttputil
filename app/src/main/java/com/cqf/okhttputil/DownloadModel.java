@@ -6,7 +6,7 @@ import android.os.Parcelable;
 /**
  * Created by roy on 16/3/8.
  */
-public class DownloadModel implements Parcelable {
+public class DownloadModel implements Parcelable, Cloneable {
     private String url;
     private String path;
     private int downloadId;
@@ -90,7 +90,13 @@ public class DownloadModel implements Parcelable {
         this.isCancel = in.readByte() != 0;
     }
 
-    public static final Parcelable.Creator<DownloadModel> CREATOR = new Parcelable.Creator<DownloadModel>() {
+    @Override
+    public DownloadModel clone() throws CloneNotSupportedException {
+        return (DownloadModel) super.clone();
+    }
+
+    public static final Parcelable.Creator<DownloadModel> CREATOR = new Parcelable
+            .Creator<DownloadModel>() {
         public DownloadModel createFromParcel(Parcel source) {
             return new DownloadModel(source);
         }

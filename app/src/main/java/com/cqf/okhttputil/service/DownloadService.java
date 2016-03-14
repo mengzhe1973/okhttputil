@@ -7,9 +7,9 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.Nullable;
 
+import com.cqf.okhttputil.DownloadModel;
 import com.cqf.okhttputil.IDownloadAidlInterface;
 import com.cqf.okhttputil.okhttp.download.DownloadManager;
-import com.cqf.okhttputil.DownloadModel;
 
 /**
  * Created by roy on 16/3/4.
@@ -23,6 +23,16 @@ public class DownloadService extends Service {
 
     private Binder getBinder() {
         return new DownloadServiceBinder();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
     }
 
     @Nullable

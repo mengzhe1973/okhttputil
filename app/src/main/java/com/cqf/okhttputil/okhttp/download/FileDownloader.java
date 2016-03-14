@@ -7,9 +7,12 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.RemoteException;
 
-import com.cqf.okhttputil.IDownloadAidlInterface;
 import com.cqf.okhttputil.DownloadModel;
+import com.cqf.okhttputil.IDownloadAidlInterface;
 import com.cqf.okhttputil.service.DownloadService;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by roy on 16/3/8.
@@ -18,6 +21,11 @@ import com.cqf.okhttputil.service.DownloadService;
 public class FileDownloader implements ServiceConnection {
     private static FileDownloader ourInstance = new FileDownloader();
     private IDownloadAidlInterface service;
+    public List<DownloadTask> needRestartTask = new ArrayList<>();
+
+    public IDownloadAidlInterface getService() {
+        return service;
+    }
 
     public static FileDownloader getInstance() {
         return ourInstance;
@@ -58,11 +66,15 @@ public class FileDownloader implements ServiceConnection {
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         this.service = IDownloadAidlInterface.Stub.asInterface(service);
+        for (DownloadTask task : needRestartTask) {
+            task.start();
+            needRestartTask.remove(task);
+        }
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
         this.service = null;
-
+        needRestartTask.clear();
     }
 }

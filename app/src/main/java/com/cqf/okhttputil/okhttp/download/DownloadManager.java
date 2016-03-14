@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.greenrobot.event.EventBus;
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -36,7 +38,7 @@ public class DownloadManager {
     }
 
 
-    public void startDownload(DownloadModel model) {
+    public void startDownload(final DownloadModel model) {
         String url = model.getUrl();
         String path = model.getPath();
         if (!TextUtils.isEmpty(url) && !TextUtils.isEmpty(path)) {
@@ -51,12 +53,21 @@ public class DownloadManager {
                     .build();
             try {
                 target.createNewFile();
-                Response response = okHttpClient.newCall(request).execute();
-                final boolean isSucceedStart = response.code() == 200;
-                if (isSucceedStart) {
-                    String filepath = saveFile(response, target, model);
-                }
+                okHttpClient.newCall(request).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        final boolean isSucceedStart = response.code() == 200;
+                        if (isSucceedStart) {
+                            String filepath = saveFile(response, target, model);
+                        }
+                    }
+                });
             } catch (Exception e) {
+                String a = "";
             }
         }
     }
@@ -92,12 +103,13 @@ public class DownloadManager {
                     totalTime += 1;
                 }
                 model.setProgress(progress);
+                DownloadModel clone = model.clone();
                 long networkSpeed = sum / totalTime;
-                EventBus.getDefault().post(model);
+                EventBus.getDefault().post(clone);
             }
             fos.flush();
             return target.getAbsolutePath();
-        } catch (IOException e) {
+        } catch (Exception e) {
             return "";
         } finally {
             try {

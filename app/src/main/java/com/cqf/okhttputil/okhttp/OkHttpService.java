@@ -1,13 +1,10 @@
 package com.cqf.okhttputil.okhttp;
 
 import android.os.Build;
-import android.text.TextUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,7 +13,6 @@ import java.util.Map;
 public class OkHttpService {
     private static OkHttpService ourInstance = new OkHttpService();
     private final OkHttpManager manager;
-    private Map<String, List<String>> reqeustMap;//正在请求的集合(以activity和fragment为单位)
 
     public static OkHttpService getInstance() {
         return ourInstance;
@@ -24,7 +20,6 @@ public class OkHttpService {
 
     private OkHttpService() {
         manager = OkHttpManager.getInstance();
-        reqeustMap = new HashMap<>();
     }
 
     public RequestParams createCommonParams(HttpCycleContext mContext) {
@@ -41,22 +36,8 @@ public class OkHttpService {
     public void testRequest1(HttpCycleContext mContext, OkHttpCallback callback) {
         RequestParams requestParams = createCommonParams(mContext);
         String url = "http://api.juxiangyou.com/app/api.php?c=login&a=register";
-        addRequest(mContext.getHttpTaskKey(), url);
         String requestKey = mContext.getHttpTaskKey();
         manager.postAsyn(requestKey, url, requestParams, callback);
-    }
-
-    public void addRequest(String key, String url) {
-        if (!TextUtils.isEmpty(key) && !TextUtils.isEmpty(url)) {
-            if (reqeustMap.containsKey(key)) {
-                List<String> tasks = reqeustMap.get(key);
-                tasks.add(url);
-            } else {
-                List<String> tasks = new ArrayList<>();
-                tasks.add(url);
-                reqeustMap.put(key, tasks);
-            }
-        }
     }
 
     /**

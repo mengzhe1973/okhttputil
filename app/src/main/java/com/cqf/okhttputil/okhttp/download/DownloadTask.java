@@ -54,9 +54,12 @@ public class DownloadTask {
     }
 
     public int start() {
-        checkFile(path);
-        FileDownloader.getInstance().bindDownloadService();
-        startExecute();
+        if (FileDownloader.getInstance().getService() == null) {
+            FileDownloader.getInstance().bindDownloadService();
+            FileDownloader.getInstance().needRestartTask.add(this);
+        } else {
+            startExecute();
+        }
         return getDownloadId();
     }
 
@@ -64,6 +67,7 @@ public class DownloadTask {
      * 开启下载任务
      */
     private boolean startExecute() {
+        checkFile(path);
         DownloadModel model = new DownloadModel();
         model.setPath(path);
         model.setUrl(url);
