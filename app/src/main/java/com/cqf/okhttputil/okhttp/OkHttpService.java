@@ -63,6 +63,7 @@ public class OkHttpService {
         urlFull.append(url);
         if (urlFull.indexOf("?", 0) < 0 && params.size() > 0) {
             urlFull.append("?");
+            
         }
         int flag = 0;
         for (Map.Entry<String, String> entry : params.entrySet()) {
